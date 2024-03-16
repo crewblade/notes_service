@@ -3,8 +3,8 @@ syntax = "proto3";
 package notes;
 option go_package = "github.com/crewblade/notes_service/protos/gen/go/notes";
 service Notes {
-  rpc CreateNote (CreateNoteRequest) returns (CreateNoteResponse); // эти 3 штуки возвращают что то конкретное
-  rpc GetNoteById (GetNoteByIdRequest) returns (Note);             // и ошибку вторым аргументом очевидно
+  rpc CreateNote (CreateNoteRequest) returns (CreateNoteResponse); 
+  rpc GetNoteById (GetNoteByIdRequest) returns (Note);
   rpc GetNotes (GetNotesRequest) returns (GetNotesResponse);
   rpc UpdateNote (UpdateNoteRequest) returns (Note);
   rpc DeleteNote (DeleteNoteRequest) returns (Note);
