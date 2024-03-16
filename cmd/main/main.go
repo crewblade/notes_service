@@ -25,5 +25,6 @@ func main() {
 	signal.Notify(stop, syscall.SIGTERM, syscall.SIGINT)
 	signal := <-stop
 	application.GRPCSrv.Stop()
+
 	log.Info("application stopped with signal:" + signal.String())
 }
