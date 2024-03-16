@@ -9,6 +9,7 @@ import (
 
 type App struct {
 	GRPCSrv *grpcapp.App
+	Storage *postgres.Storage
 }
 
 func New(log *slog.Logger, grpcPort int, connectionString string) *App {
@@ -21,5 +22,12 @@ func New(log *slog.Logger, grpcPort int, connectionString string) *App {
 	grpcApp := grpcapp.New(log, notesService, grpcPort)
 	return &App{
 		GRPCSrv: grpcApp,
+		Storage: storage,
 	}
+}
+func (a *App) CloseDB() error {
+	if a.Storage != nil {
+		return a.Storage.Close()
+	}
+	return nil
 }

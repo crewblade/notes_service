@@ -24,7 +24,11 @@ func main() {
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, syscall.SIGTERM, syscall.SIGINT)
 	signal := <-stop
+	log.Info("application stopped with signal:" + signal.String())
+
+	if err := application.CloseDB(); err != nil {
+		log.Error("failed to close database connection", slog.String("err", err.Error()))
+	}
 	application.GRPCSrv.Stop()
 
-	log.Info("application stopped with signal:" + signal.String())
 }

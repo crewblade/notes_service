@@ -154,3 +154,9 @@ func (s *Storage) GetNotes(ctx context.Context, limit int32, offsetID string) ([
 	}
 	return notes, nextOffsetID, nil
 }
+func (s *Storage) Close() error {
+	if s.db != nil {
+		return s.db.Close()
+	}
+	return nil
+}
