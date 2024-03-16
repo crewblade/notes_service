@@ -1,5 +1,5 @@
-connection_string: ""
+connection_string: "postgresql://postgres:postgres@localhost:5432/postgres"
 grpc:
-  port:
-  timeout:
+  port: 8088
+  timeout: 5s
 

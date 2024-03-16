@@ -1,0 +1,49 @@
+syntax = "proto3";
+
+package notes;
+option go_package = "github.com/crewblade/notes_service/protos/gen/go/notes";
+service Notes {
+  rpc CreateNote (CreateNoteRequest) returns (CreateNoteResponse); // эти 3 штуки возвращают что то конкретное
+  rpc GetNoteById (GetNoteByIdRequest) returns (Note);             // и ошибку вторым аргументом очевидно
+  rpc GetNotes (GetNotesRequest) returns (GetNotesResponse);
+  rpc UpdateNote (UpdateNoteRequest) returns (Note);
+  rpc DeleteNote (DeleteNoteRequest) returns (Note);
+}
+
+message CreateNoteRequest {
+  string title = 1;
+  string content = 2;
+}
+message CreateNoteResponse{
+  string id = 1;
+}
+
+message GetNoteByIdRequest {
+  string id = 1;
+}
+
+message GetNotesRequest {
+  int32 limit = 1;
+  string offset_id = 2;
+}
+
+message UpdateNoteRequest {
+  string id = 1;
+  string title = 2;
+  string content = 3;
+}
+
+message DeleteNoteRequest{
+  string id = 1;
+}
+
+message Note {
+  string id = 1;
+  string title = 2;
+  string content = 3;
+}
+
+message GetNotesResponse {
+  repeated Note notes = 1;
+  string next_offset_id = 2;
+}

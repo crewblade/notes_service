@@ -11,14 +11,22 @@ type Config struct {
 	GRPC             GRPCConfig `yaml:"grpc"`
 }
 type GRPCConfig struct {
-	Port    string        `yaml:"port"`
+	Port    int           `yaml:"port"`
 	Timeout time.Duration `yaml:"timeout"`
 }
 
 func MustLoad() *Config {
-	path := os.Getenv("CONFIG_PATH")
-	var cfg Config
-	if err := cleanenv.ReadConfig(path, &cfg); err != nil {
-		panic("failed to read config with path " + path + "\n" + err.Error())
+	configPath := os.Getenv("CONFIG_PATH")
+	if configPath == "" {
+		panic("CONFIG_PATH is not set")
 	}
+	if _, err := os.Stat(configPath); os.IsNotExist(err) {
+		panic("config file doesn't exist:" + configPath)
+	}
+	var cfg Config
+	err := cleanenv.ReadConfig(configPath, &cfg)
+	if err != nil {
+		panic("cannot read config: " + configPath)
+	}
+	return &cfg
 }
