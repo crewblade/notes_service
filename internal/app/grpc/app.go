@@ -4,6 +4,7 @@ import (
 	"fmt"
 	notesrpc "github.com/crewblade/notes_service/internal/grpc/notes"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
 	"log/slog"
 	"net"
 )
@@ -16,6 +17,7 @@ type App struct {
 
 func New(log *slog.Logger, notesService notesrpc.Notes, port int) *App {
 	gRPCServer := grpc.NewServer()
+	reflection.Register(gRPCServer)
 	notesrpc.Register(gRPCServer, notesService)
 	return &App{
 		log:        log,

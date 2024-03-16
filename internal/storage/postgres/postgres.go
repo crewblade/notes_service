@@ -3,7 +3,6 @@ package postgres
 import (
 	"context"
 	"database/sql"
-	"errors"
 	"fmt"
 	"github.com/crewblade/notes_service/internal/domain/models"
 	"github.com/crewblade/notes_service/internal/storage"
@@ -47,7 +46,7 @@ func (s *Storage) CreateNote(ctx context.Context, title string, content string) 
 	const op = "storage.postgres.CreateNote"
 	id = uuid.NewString()
 	createdAt := time.Now()
-	stmt, err := s.db.Prepare("INSERT INTO notes(id, title, content, created_at) VALUES (?, ?, ?, ?)")
+	stmt, err := s.db.Prepare("INSERT INTO notes(id, title, content, created_at) VALUES ($1, $2, $3, $4)")
 	if err != nil {
 		return "", fmt.Errorf("%s: %w", op, err)
 	}
@@ -60,7 +59,7 @@ func (s *Storage) CreateNote(ctx context.Context, title string, content string) 
 }
 func (s *Storage) GetNoteById(ctx context.Context, id string) (models.Note, error) {
 	const op = "storage.postgres.GetNoteById"
-	stmt, err := s.db.Prepare("SELECT id, title, content FROM notes WHERE id = ?")
+	stmt, err := s.db.Prepare("SELECT id, title, content FROM notes WHERE id = $1")
 	if err != nil {
 		return models.Note{}, fmt.Errorf("%s: %w", op, err)
 	}
@@ -68,10 +67,7 @@ func (s *Storage) GetNoteById(ctx context.Context, id string) (models.Note, erro
 	var note models.Note
 	err = row.Scan(&note.Id, &note.Title, &note.Content)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return models.Note{}, fmt.Errorf("%s: %w", op, storage.IdNotFound)
-		}
-		return models.Note{}, fmt.Errorf("%s: %w", op, err)
+		return models.Note{}, fmt.Errorf("%s: %w", op, storage.IdNotFound)
 	}
 
 	return note, nil
@@ -81,10 +77,7 @@ func (s *Storage) UpdateNote(ctx context.Context, id, title, content string) (mo
 
 	var exists bool
 	err := s.db.QueryRowContext(ctx, "SELECT EXISTS(SELECT 1 FROM notes WHERE id = $1)", id).Scan(&exists)
-	if err != nil {
-		return models.Note{}, fmt.Errorf("%s: %w", op, err)
-	}
-	if !exists {
+	if err != nil || !exists {
 		return models.Note{}, fmt.Errorf("%s: %w", op, storage.IdNotFound)
 	}
 
@@ -106,13 +99,9 @@ func (s *Storage) DeleteNote(ctx context.Context, id string) (models.Note, error
 
 	var exists bool
 	err := s.db.QueryRowContext(ctx, "SELECT EXISTS(SELECT 1 FROM notes WHERE id = $1)", id).Scan(&exists)
-	if err != nil {
-		return models.Note{}, fmt.Errorf("%s: %w", op, err)
-	}
-	if !exists {
+	if err != nil || !exists {
 		return models.Note{}, fmt.Errorf("%s: %w", op, storage.IdNotFound)
 	}
-
 	var deletedNote models.Note
 	err = s.db.QueryRowContext(ctx, "SELECT id, title, content FROM notes WHERE id = $1", id).Scan(&deletedNote.Id, &deletedNote.Title, &deletedNote.Content)
 	if err != nil {
@@ -133,27 +122,35 @@ func (s *Storage) GetNotes(ctx context.Context, limit int32, offsetID string) ([
 	var offsetTime time.Time
 	err := s.db.QueryRowContext(ctx, "SELECT created_at FROM notes WHERE id = $1", offsetID).Scan(&offsetTime)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, "", fmt.Errorf("%s: %w", op, storage.IdNotFound)
-		}
-		return nil, "", fmt.Errorf("%s: %w", op, err)
+		//if errors.Is(err, sql.ErrNoRows) {
+		//	return nil, "", fmt.Errorf("%s: %w", op, storage.IdNotFound)
+		//}
+		//return nil, "", fmt.Errorf("%s: %w", op, err)
+		return nil, "", fmt.Errorf("%s: %w", op, storage.IdNotFound)
 	}
-
-	rows, err := s.db.QueryContext(ctx, "SELECT id, title, content, created_at FROM notes WHERE created_at > $1 ORDER BY created_at LIMIT $2", offsetTime, limit)
+	rows, err := s.db.QueryContext(ctx, "SELECT id, title, content, created_at FROM notes WHERE created_at >= $1 ORDER BY created_at LIMIT $2", offsetTime, limit+1)
 	if err != nil {
 		return nil, "", fmt.Errorf("%s: %w", op, err)
 	}
 
 	var notes []models.Note
 	var nextOffsetID string
+	var ignoredVal time.Time
 	for rows.Next() {
 		var note models.Note
-		if err := rows.Scan(&note.Id, &note.Title, &note.Content); err != nil {
+		if err := rows.Scan(&note.Id, &note.Title, &note.Content, &ignoredVal); err != nil {
+			fmt.Println(err.Error())
 			return nil, "", fmt.Errorf("%s: %w", op, err)
 		}
 		notes = append(notes, note)
 		nextOffsetID = note.Id
 	}
-
+	// (1 2 3) 4| 5
+	// limit 3 + 1
+	if len(notes) == int(limit)+1 {
+		notes = notes[:len(notes)-1]
+	} else {
+		nextOffsetID = ""
+	}
 	return notes, nextOffsetID, nil
 }

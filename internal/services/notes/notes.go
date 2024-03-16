@@ -57,6 +57,7 @@ func (n *Notes) CreateNote(ctx context.Context, title string, content string) (i
 	log := n.log.With(slog.String("op", op))
 	id, err = n.noteCreator.CreateNote(ctx, title, content)
 	if err != nil {
+		log.Warn("err:" + err.Error())
 		return "", fmt.Errorf("%s: %w", op, err)
 	}
 	log.Info("Note created", slog.Any("id", id))

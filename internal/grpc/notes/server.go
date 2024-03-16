@@ -2,7 +2,10 @@ package notes
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"github.com/crewblade/notes_service/internal/domain/models"
+	"github.com/crewblade/notes_service/internal/storage"
 	pb "github.com/crewblade/notes_service/protos/gen/go/notes"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -26,6 +29,7 @@ func Register(gRPC *grpc.Server, notes Notes) {
 	pb.RegisterNotesServer(gRPC, &serverAPI{notes: notes})
 }
 func (s *serverAPI) CreateNote(ctx context.Context, req *pb.CreateNoteRequest) (*pb.CreateNoteResponse, error) {
+	fmt.Println("CreateNode:", ctx, req)
 	if req.GetTitle() == "" {
 		return nil, status.Error(codes.InvalidArgument, "title is required")
 	}
@@ -46,6 +50,9 @@ func (s *serverAPI) GetNoteById(ctx context.Context, req *pb.GetNoteByIdRequest)
 	var note models.Note
 	note, err := s.notes.GetNoteById(ctx, req.GetId())
 	if err != nil {
+		if errors.Is(err, storage.IdNotFound) {
+			return nil, status.Error(codes.NotFound, "Id not found")
+		}
 		return nil, status.Error(codes.Internal, "internal error")
 	}
 	return &pb.Note{
@@ -58,9 +65,15 @@ func (s *serverAPI) GetNotes(ctx context.Context, req *pb.GetNotesRequest) (*pb.
 	if req.GetOffsetId() == "" {
 		return nil, status.Error(codes.InvalidArgument, "get_offset_id is required")
 	}
+	if req.GetLimit() <= 0 {
+		return nil, status.Error(codes.InvalidArgument, "limit should be > 0")
+	}
 	var notesData []models.Note
 	notesData, next_offset_id, err := s.notes.GetNotes(ctx, req.GetLimit(), req.GetOffsetId())
 	if err != nil {
+		if errors.Is(err, storage.IdNotFound) {
+			return nil, status.Error(codes.NotFound, "Id not found")
+		}
 		return nil, status.Error(codes.Internal, "internal error")
 	}
 	var notes []*pb.Note
@@ -84,6 +97,9 @@ func (s *serverAPI) UpdateNote(ctx context.Context, req *pb.UpdateNoteRequest) (
 	var note models.Note
 	note, err := s.notes.UpdateNote(ctx, req.GetId(), req.GetTitle(), req.GetContent())
 	if err != nil {
+		if errors.Is(err, storage.IdNotFound) {
+			return nil, status.Error(codes.NotFound, "Id not found")
+		}
 		return nil, status.Error(codes.Internal, "internal error")
 	}
 	return &pb.Note{
@@ -100,6 +116,9 @@ func (s *serverAPI) DeleteNote(ctx context.Context, req *pb.DeleteNoteRequest) (
 	var note models.Note
 	note, err := s.notes.DeleteNote(ctx, req.GetId())
 	if err != nil {
+		if errors.Is(err, storage.IdNotFound) {
+			return nil, status.Error(codes.NotFound, "Id not found")
+		}
 		return nil, status.Error(codes.Internal, "internal error")
 	}
 	return &pb.Note{
