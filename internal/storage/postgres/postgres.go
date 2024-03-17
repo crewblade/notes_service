@@ -128,17 +128,16 @@ func (s *Storage) GetNotes(ctx context.Context, limit int32, offsetID string) ([
 		//return nil, "", fmt.Errorf("%s: %w", op, err)
 		return nil, "", fmt.Errorf("%s: %w", op, storage.IdNotFound)
 	}
-	rows, err := s.db.QueryContext(ctx, "SELECT id, title, content, created_at FROM notes WHERE created_at >= $1 ORDER BY created_at LIMIT $2", offsetTime, limit+1)
+	rows, err := s.db.QueryContext(ctx, "SELECT id, title, content FROM notes WHERE created_at >= $1 ORDER BY created_at LIMIT $2", offsetTime, limit+1)
 	if err != nil {
 		return nil, "", fmt.Errorf("%s: %w", op, err)
 	}
 
 	var notes []models.Note
 	var nextOffsetID string
-	var ignoredVal time.Time
 	for rows.Next() {
 		var note models.Note
-		if err := rows.Scan(&note.Id, &note.Title, &note.Content, &ignoredVal); err != nil {
+		if err := rows.Scan(&note.Id, &note.Title, &note.Content); err != nil {
 			fmt.Println(err.Error())
 			return nil, "", fmt.Errorf("%s: %w", op, err)
 		}
