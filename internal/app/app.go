@@ -25,9 +25,3 @@ func New(log *slog.Logger, grpcPort int, connectionString string) *App {
 		Storage: storage,
 	}
 }
-func (a *App) CloseDB() error {
-	if a.Storage != nil {
-		return a.Storage.Close()
-	}
-	return nil
-}

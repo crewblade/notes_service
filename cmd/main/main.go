@@ -26,7 +26,7 @@ func main() {
 	signal := <-stop
 	log.Info("application stopped with signal:" + signal.String())
 
-	if err := application.CloseDB(); err != nil {
+	if err := application.Storage.Close(); err != nil {
 		log.Error("failed to close database connection", slog.String("err", err.Error()))
 	}
 	application.GRPCSrv.Stop()
