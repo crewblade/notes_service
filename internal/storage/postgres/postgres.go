@@ -22,22 +22,22 @@ func New(connectionString string) (*Storage, error) {
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
-	stmt, err := db.Prepare(`
-	CREATE TABLE IF NOT EXISTS notes (
-		id UUID PRIMARY KEY,
-		title TEXT NOT NULL,
-		content TEXT,
-		created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
-	)
-`)
-	if err != nil {
-		return nil, fmt.Errorf("%s, %w", op, err)
-	}
-
-	_, err = stmt.Exec()
-	if err != nil {
-		return nil, fmt.Errorf("%s, %w", op, err)
-	}
+	//	stmt, err := db.Prepare(`
+	//	CREATE TABLE IF NOT EXISTS notes (
+	//		id UUID PRIMARY KEY,
+	//		title TEXT NOT NULL,
+	//		content TEXT,
+	//		created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+	//	)
+	//`)
+	//	if err != nil {
+	//		return nil, fmt.Errorf("%s, %w", op, err)
+	//	}
+	//
+	//	_, err = stmt.Exec()
+	//	if err != nil {
+	//		return nil, fmt.Errorf("%s, %w", op, err)
+	//	}
 	return &Storage{db: db}, nil
 
 }
