@@ -18,18 +18,27 @@ type Notes struct {
 	noteLister     NoteLister
 }
 
+//go:generate go run github.com/vektra/mockery/v2@v2.42.1 --name NoteCreator
 type NoteCreator interface {
 	CreateNote(ctx context.Context, title string, content string) (id string, err error)
 }
+
+//go:generate go run github.com/vektra/mockery/v2@v2.42.1 --name NoteGetterById
 type NoteGetterById interface {
 	GetNoteById(ctx context.Context, id string) (models.Note, error)
 }
+
+//go:generate go run github.com/vektra/mockery/v2@v2.42.1 --name NoteUpdater
 type NoteUpdater interface {
 	UpdateNote(ctx context.Context, id, title, content string) (models.Note, error)
 }
+
+//go:generate go run github.com/vektra/mockery/v2@v2.42.1 --name NoteDeleter
 type NoteDeleter interface {
 	DeleteNote(ctx context.Context, id string) (models.Note, error)
 }
+
+//go:generate go run github.com/vektra/mockery/v2@v2.42.1 --name NoteLister
 type NoteLister interface {
 	GetNotes(ctx context.Context, limit int32, offset_id string) (notes []models.Note, next_offset_id string, err error)
 }
